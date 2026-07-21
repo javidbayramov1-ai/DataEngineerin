@@ -1,0 +1,6 @@
+{
+  "policy_number": "POL-FALCON-001",
+  "provider": "Coruscant Galactic Insurance",
+  "coverage_amount": 500000,
+  "starship_model": "Millennium Falcon"
+}

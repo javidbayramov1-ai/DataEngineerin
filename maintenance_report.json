@@ -1,0 +1,50 @@
+{
+    "_comment": "Soziale Daten fuer die Graph-DB (Neo4j). Knoten werden aus der relationalen DB (Character/SmugglerFaction) gespiegelt; diese Datei liefert die Beziehungen. Namen muessen exakt den Character.name-Werten entsprechen.",
+    "trusts": [
+        { "from": "Han Solo", "to": "Chewbacca", "level": 10 },
+        { "from": "Chewbacca", "to": "Han Solo", "level": 10 },
+        { "from": "Han Solo", "to": "Lando Calrissian", "level": 6 },
+        { "from": "Lando Calrissian", "to": "Han Solo", "level": 7 },
+        { "from": "Han Solo", "to": "Qi'ra", "level": 8 },
+        { "from": "Qi'ra", "to": "Han Solo", "level": 7 },
+        { "from": "Luke Skywalker", "to": "Han Solo", "level": 9 },
+        { "from": "Han Solo", "to": "Luke Skywalker", "level": 7 },
+        { "from": "Han Solo", "to": "Maz Kanata", "level": 9 },
+        { "from": "Maz Kanata", "to": "Han Solo", "level": 8 },
+        { "from": "Lando Calrissian", "to": "Maz Kanata", "level": 8 },
+        { "from": "Qi'ra", "to": "Maz Kanata", "level": 6 },
+        { "from": "Lando Calrissian", "to": "Dengar", "level": 4 },
+        { "from": "Qi'ra", "to": "Bossk", "level": 5 },
+        { "from": "Bossk", "to": "Boba Fett", "level": 6 },
+        { "from": "Boba Fett", "to": "Bossk", "level": 7 },
+        { "from": "Boba Fett", "to": "Dengar", "level": 5 },
+        { "from": "Dengar", "to": "Boba Fett", "level": 6 },
+        { "from": "Chewbacca", "to": "Lando Calrissian", "level": 5 },
+        { "from": "Maz Kanata", "to": "Qi'ra", "level": 6 }
+    ],
+    "smuggled_with": [
+        { "a": "Han Solo", "b": "Chewbacca", "missions": 12 },
+        { "a": "Han Solo", "b": "Lando Calrissian", "missions": 4 },
+        { "a": "Han Solo", "b": "Qi'ra", "missions": 6 },
+        { "a": "Lando Calrissian", "b": "Maz Kanata", "missions": 3 },
+        { "a": "Boba Fett", "b": "Bossk", "missions": 5 },
+        { "a": "Boba Fett", "b": "Dengar", "missions": 3 },
+        { "a": "Qi'ra", "b": "Maz Kanata", "missions": 2 },
+        { "a": "Lando Calrissian", "b": "Chewbacca", "missions": 2 }
+    ],
+    "rivals": [
+        { "a": "Han Solo", "b": "Greedo" },
+        { "a": "Han Solo", "b": "Boba Fett" },
+        { "a": "Lando Calrissian", "b": "Boba Fett" },
+        { "a": "Bossk", "b": "Chewbacca" }
+    ],
+    "memberships": [
+        { "smuggler": "Boba Fett", "faction": "Hutt Cartel" },
+        { "smuggler": "Bossk", "faction": "Hutt Cartel" },
+        { "smuggler": "Greedo", "faction": "Hutt Cartel" },
+        { "smuggler": "Dengar", "faction": "Hutt Cartel" },
+        { "smuggler": "Qi'ra", "faction": "Pyke Syndicate" },
+        { "smuggler": "Lando Calrissian", "faction": "Pyke Syndicate" },
+        { "smuggler": "Han Solo", "faction": "Pyke Syndicate" }
+    ]
+}

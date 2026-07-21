@@ -1,0 +1,29 @@
+[
+  {
+    "tracking_code": "Kessel-Run-12",
+    "manifest_code": "CARGO-001",
+    "items": [
+      {
+        "name": "Hyperfuel Cells",
+        "quantity": 10,
+        "weight": 250.5
+      },
+      {
+        "name": "Medical Supplies",
+        "quantity": 40,
+        "weight": 120.0
+      }
+    ]
+  },
+  {
+    "tracking_code": "Bespin-Drop-01",
+    "manifest_code": "CARGO-002",
+    "items": [
+      {
+        "name": "Droid Parts",
+        "quantity": 25,
+        "weight": 300.0
+      }
+    ]
+  }
+]

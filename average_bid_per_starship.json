@@ -1,0 +1,30 @@
+{
+    "id": 2,
+    "model_name": "Millennium Falcon",
+    "seller": {
+        "id": 1,
+        "name": "Han Solo"
+    },
+    "ship_classes": [
+        "Light Freighter"
+    ],
+    "holo_records": [
+        {
+            "id": 1,
+            "file_path": "/holonet/falcon_front.holo",
+            "resolution": "1080p"
+        }
+    ],
+    "bids": [
+        {
+            "id": 2,
+            "amount": 100000.0,
+            "bidder": "Luke Skywalker"
+        },
+        {
+            "id": 3,
+            "amount": 120000.0,
+            "bidder": "Lando Calrissian"
+        }
+    ]
+}

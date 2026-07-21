@@ -1,142 +1,82 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Table
-from sqlalchemy.orm import declarative_base, relationship
+# Star Wars Auktions- & Logistiksystem — Aufgabe 4 (Polyglot Persistence)
 
-Base = declarative_base()
+Erweiterung des relationalen Projekts aus Aufgabe 2 (SQLite + SQLAlchemy) um eine
+**Graph-Datenbank (Neo4j)**, die das *soziale Schmuggler-Netzwerk* abbildet.
 
-# --- ASSOCIATION TABLES (Many-to-Many) ---
-starship_class_table = Table('starship_class', Base.metadata,
-    Column('starship_id', Integer, ForeignKey('starships.id')),
-    Column('shipclass_id', Integer, ForeignKey('shipclasses.id'))
-)
+## Architektur (Polyglot Persistence)
 
-mission_faction_table = Table('mission_faction', Base.metadata,
-    Column('mission_id', Integer, ForeignKey('transport_missions.id')),
-    Column('faction_id', Integer, ForeignKey('smuggler_factions.id'))
-)
+| Speicher | Technologie | Inhalt |
+|----------|-------------|--------|
+| Relationale DB | SQLite (in-memory) + SQLAlchemy ORM | Schiffe, Auktionen, Gebote, Zahlungsmittel, Missionen, Fraktionen … |
+| Graph-DB | Neo4j (Bolt) | Soziales Netzwerk: wer vertraut wem, wer schmuggelt mit wem, Rivalitäten, Fraktionszugehörigkeit |
 
-# --- ENTITIES ---
-class Character(Base):
-    __tablename__ = 'characters'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    
-    locations = relationship("PlanetLocation", back_populates="character")
-    bids = relationship("Bid", back_populates="bidder")
-    payment_methods = relationship("PaymentMethod", back_populates="character")
-    starships_for_sale = relationship("Starship", back_populates="seller")
+**Brücke zwischen den DBs:** der `Character` aus der relationalen DB ist gleichzeitig
+ein `(:Smuggler)`-Knoten im Graphen (`Smuggler.sql_id = Character.id`,
+`Smuggler.name = Character.name`). Die Graph-Knoten werden direkt aus der
+relationalen Session erzeugt — beide Speicher teilen sich also garantiert dieselben
+Entitäten.
 
-    def __repr__(self):
-        return f"<Character(name='{self.name}')>"
+## Voraussetzungen
 
-class PlanetLocation(Base):
-    __tablename__ = 'planet_locations'
-    id = Column(Integer, primary_key=True)
-    planet_name = Column(String)
-    sector = Column(String)
-    character_id = Column(Integer, ForeignKey('characters.id'))
-    
-    character = relationship("Character", back_populates="locations")
+```bash
+pip install -r requirements.txt
+```
 
-class Starship(Base):
-    __tablename__ = 'starships'
-    id = Column(Integer, primary_key=True)
-    model_name = Column(String)
-    seller_id = Column(Integer, ForeignKey('characters.id'))
-    
-    seller = relationship("Character", back_populates="starships_for_sale")
-    bids = relationship("Bid", back_populates="starship")
-    holo_records = relationship("HoloRecord", back_populates="starship")
-    ship_classes = relationship("ShipClass", secondary=starship_class_table, back_populates="starships")
+## Neo4j starten (Docker-Einzeiler)
 
-    def __repr__(self):
-        return f"<Starship(model='{self.model_name}')>"
+```bash
+docker run --name neo4j-sw -p 7474:7474 -p 7687:7687 \
+  -e NEO4J_AUTH=neo4j/password neo4j:5
+```
 
-class ShipClass(Base):
-    __tablename__ = 'shipclasses'
-    id = Column(Integer, primary_key=True)
-    class_name = Column(String)
-    
-    starships = relationship("Starship", secondary=starship_class_table, back_populates="ship_classes")
+- Neo4j Browser: <http://localhost:7474>  (Login: `neo4j` / `password`)
+- Bolt-Endpunkt: `bolt://localhost:7687`
 
-class HoloRecord(Base):
-    __tablename__ = 'holo_records'
-    id = Column(Integer, primary_key=True)
-    file_path = Column(String)
-    resolution = Column(String)
-    starship_id = Column(Integer, ForeignKey('starships.id'))
-    
-    starship = relationship("Starship", back_populates="holo_records")
+> Falls ein anderes Passwort verwendet wird, dieses in `main.py` (Variable
+> `NEO4J_PASSWORD`) oder per Umgebungsvariable setzen:
+>
+> ```bash
+> export NEO4J_URI=bolt://localhost:7687
+> export NEO4J_USER=neo4j
+> export NEO4J_PASSWORD=DEIN_PASSWORT
+> ```
 
-class Bid(Base):
-    __tablename__ = 'bids'
-    id = Column(Integer, primary_key=True)
-    amount = Column(Float)
-    bidder_id = Column(Integer, ForeignKey('characters.id'))
-    starship_id = Column(Integer, ForeignKey('starships.id'))
-    
-    bidder = relationship("Character", back_populates="bids")
-    starship = relationship("Starship", back_populates="bids")
+## Ausführen
 
-# --- INHERITANCE: Payment Methods ---
-class PaymentMethod(Base):
-    __tablename__ = 'payment_methods'
-    id = Column(Integer, primary_key=True)
-    type = Column(String)
-    character_id = Column(Integer, ForeignKey('characters.id'))
-    
-    character = relationship("Character", back_populates="payment_methods")
-    
-    __mapper_args__ = {
-        'polymorphic_identity': 'payment_method',
-        'polymorphic_on': type
-    }
+```bash
+python main.py
+```
 
-class RepublicCredit(PaymentMethod):
-    __tablename__ = 'republic_credits'
-    id = Column(Integer, ForeignKey('payment_methods.id'), primary_key=True)
-    account_balance = Column(Float)
-    
-    __mapper_args__ = {'polymorphic_identity': 'republic_credit'}
+Ablauf von `main.py`:
 
-class SpiceBarter(PaymentMethod):
-    __tablename__ = 'spice_barters'
-    id = Column(Integer, ForeignKey('payment_methods.id'), primary_key=True)
-    spice_type = Column(String)
-    kilos = Column(Float)
-    
-    __mapper_args__ = {'polymorphic_identity': 'spice_barter'}
+1. Relationale DB im Speicher anlegen und mit Star-Wars-Daten befüllen (10 Charaktere).
+2. Relationale Abfragen aus Aufgabe 1/2 ausführen.
+3. Neo4j-Graph aus der relationalen Session + `input_files/social_network.json` aufbauen.
+4. **3 Graph-Abfragen** ausführen (vertrauenswürdigste Schmuggler, kürzeste
+   Vertrauenskette, Partner-Empfehlung).
+5. **2 Polyglot-Abfragen** ausführen (Auktions-Vertrauenscheck, sichere Crew-Empfehlung).
 
-# --- TRANSPORT & LOGISTICS ---
-class Spaceport(Base):
-    __tablename__ = 'spaceports'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    
-    docking_bays = relationship("DockingBay", back_populates="spaceport")
-    missions = relationship("TransportMission", back_populates="origin_spaceport")
+Ist Neo4j nicht erreichbar, läuft der relationale Teil trotzdem durch; der Graph-Teil
+wird mit einem Hinweis übersprungen.
 
-class DockingBay(Base):
-    __tablename__ = 'docking_bays'
-    id = Column(Integer, primary_key=True)
-    bay_number = Column(String)
-    spaceport_id = Column(Integer, ForeignKey('spaceports.id'))
-    
-    spaceport = relationship("Spaceport", back_populates="docking_bays")
+## Projektstruktur
 
-class SmugglerFaction(Base):
-    __tablename__ = 'smuggler_factions'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    
-    missions = relationship("TransportMission", secondary=mission_faction_table, back_populates="factions")
+```
+StarWarsProject/
+├── models.py            # SQLAlchemy ORM-Modelle (relationale DB)
+├── queries.py           # Relationale Abfragen (Aufgabe 1/2)
+├── file_io.py           # JSON-Import der dateibasierten Entities (Aufgabe 2)
+├── graph_db.py          # NEU: Neo4j-Schicht (Aufbau + 3 Graph-Abfragen)
+├── polyglot.py          # NEU: 2 Polyglot-Abfragen über beide DBs
+├── main.py              # Orchestrierung relational + Graph + Polyglot
+├── requirements.txt
+├── input_files/
+│   ├── social_network.json   # NEU: Vertrauens-/Schmuggel-/Rivalitäts-Kanten
+│   └── …                     # Aufgabe-2-Importdateien
+└── output_files/             # Aufgabe-2-Ergebnisdateien
+```
 
-class TransportMission(Base):
-    __tablename__ = 'transport_missions'
-    id = Column(Integer, primary_key=True)
-    tracking_code = Column(String)
-    destination_id = Column(Integer, ForeignKey('planet_locations.id'))
-    origin_spaceport_id = Column(Integer, ForeignKey('spaceports.id'))
-    
-    destination = relationship("PlanetLocation")
-    origin_spaceport = relationship("Spaceport", back_populates="missions")
-    factions = relationship("SmugglerFaction", secondary=mission_faction_table, back_populates="missions")
+## Neo4j-Version
+
+Getestet gegen Neo4j 5.x (Bolt). Die Constraint-Erzeugung ist versionssicher
+gekapselt, sodass auch ältere 4.x-Instanzen ohne Fehler durchlaufen.
